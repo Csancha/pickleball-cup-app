@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(sudo chown:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(supabase --version)",
+      "Bash(brew --version)",
+      "Bash(docker --version)",
+      "Bash(brew install:*)",
+      "Bash(supabase init:*)",
+      "Bash(colima start:*)",
+      "Bash(docker info:*)",
+      "Bash(supabase start:*)",
+      "Bash(colima status:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
