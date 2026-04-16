@@ -136,6 +136,12 @@
   .pb-safe { padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px); }
   .mb-nav  { margin-bottom: 80px; }
 
+  /* Join page player button */
+  .player-join-btn:hover {
+    border-color: rgba(255,0,144,0.6) !important;
+    box-shadow: 0 0 14px rgba(255,0,144,0.25);
+  }
+
   .stripe-accent {
     height: 3px;
     background: linear-gradient(90deg, #ff0090 0%, #ff0090 33%, #00e5ff 33%, #00e5ff 66%, #ffe600 66%, #ffe600 100%);

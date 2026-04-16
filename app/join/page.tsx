@@ -101,19 +101,11 @@ export default async function JoinPage() {
                           <input type="hidden" name="player_name" value={player.display_name} />
                           <button
                             type="submit"
-                            className="w-full rounded-md px-4 py-4 text-sm font-bold transition-all active:scale-95"
+                            className="player-join-btn w-full rounded-md px-4 py-4 text-sm font-bold transition-all active:scale-95"
                             style={{
                               background: "#1e1945",
-                              border: `1px solid ${team.color ?? "rgba(100,80,200,0.4)"}40`,
+                              border: `1px solid rgba(100,80,200,0.3)`,
                               color: "#f0e6ff",
-                            }}
-                            onMouseEnter={(e) => {
-                              (e.currentTarget as HTMLButtonElement).style.borderColor = team.color ?? "#ff0090";
-                              (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 14px ${team.color ?? "#ff0090"}50`;
-                            }}
-                            onMouseLeave={(e) => {
-                              (e.currentTarget as HTMLButtonElement).style.borderColor = `${team.color ?? "rgba(100,80,200,0.4)"}40`;
-                              (e.currentTarget as HTMLButtonElement).style.boxShadow = "none";
                             }}
                           >
                             {player.display_name}
