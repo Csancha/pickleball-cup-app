@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Trophy } from "lucide-react";
 
 export default function AuthLayout({
   children,
@@ -7,25 +6,20 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      {/* Header mínimo */}
-      <header className="px-4 py-4">
-        <Link href="/" className="inline-flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600">
-            <Trophy className="h-5 w-5 text-white" />
-          </div>
-          <span className="font-bold text-gray-900">Pickleball Cup</span>
+    <div className="flex min-h-screen flex-col bg-[#0d0b1a]">
+      <div className="stripe-accent w-full" />
+
+      <header className="px-5 py-4">
+        <Link href="/" className="font-display text-xl text-neon-pink" style={{ letterSpacing: "0.05em" }}>
+          ← PICKLEBALL CUP
         </Link>
       </header>
 
-      {/* Contenido */}
-      <main className="flex flex-1 items-center justify-center px-4 py-12">
+      <main className="flex flex-1 items-center justify-center px-5 py-10">
         {children}
       </main>
 
-      <footer className="px-4 py-4 text-center text-xs text-gray-400">
-        Pickleball Cup
-      </footer>
+      <div className="stripe-accent w-full" />
     </div>
   );
 }

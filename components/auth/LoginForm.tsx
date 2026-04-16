@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { loginSchema } from "@/lib/validations/auth";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -28,10 +27,7 @@ export default function LoginForm() {
     setLoading(true);
     const supabase = createClient();
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (authError) {
       setError("Email o contraseña incorrectos");
@@ -39,50 +35,41 @@ export default function LoginForm() {
       return;
     }
 
-    // Obtener el rol del usuario para redirigir correctamente
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", data.user.id)
       .single();
 
-    if (profile?.role === "admin") {
-      router.push("/admin");
-    } else {
-      router.push("/dashboard");
-    }
+    router.push(profile?.role === "admin" ? "/admin" : "/dashboard");
     router.refresh();
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="card p-6 space-y-4">
+      <div className="card space-y-4 p-6">
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 ring-1 ring-red-200">
+          <div className="rounded-md px-4 py-3 text-sm font-bold" style={{ background: "rgba(255,51,85,0.15)", border: "1px solid rgba(255,51,85,0.5)", color: "#ff3355" }}>
             {error}
           </div>
         )}
 
         <div>
-          <label htmlFor="email" className="label">
-            Email
-          </label>
+          <label htmlFor="email" className="label">Email</label>
           <input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="input"
-            placeholder="tu@email.com"
+            placeholder="admin@ejemplo.com"
             autoComplete="email"
             required
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="label">
-            Contraseña
-          </label>
+          <label htmlFor="password" className="label">Contraseña</label>
           <div className="relative">
             <input
               id="password"
@@ -97,39 +84,21 @@ export default function LoginForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-[#f0e6ff] transition-colors"
             >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn-primary w-full"
-        >
+        <button type="submit" disabled={loading} className="btn-primary w-full">
           {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Iniciando sesión...
-            </>
+            <><Loader2 className="h-4 w-4 animate-spin" /> ENTRANDO...</>
           ) : (
-            "Iniciar sesión"
+            "ENTRAR"
           )}
         </button>
       </div>
-
-      <p className="text-center text-sm text-gray-500">
-        ¿No tienes cuenta?{" "}
-        <Link href="/register" className="font-medium text-brand-600 hover:text-brand-700">
-          Regístrate
-        </Link>
-      </p>
     </form>
   );
 }

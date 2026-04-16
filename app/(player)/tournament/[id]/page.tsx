@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { Metadata } from "next";
 import PlayerTournamentView from "@/components/player/PlayerTournamentView";
 
@@ -10,27 +11,25 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("tournaments")
-    .select("name")
-    .eq("id", id)
-    .single();
+  const supabase = await createAdminClient();
+  const { data } = await supabase.from("tournaments").select("name").eq("id", id).single();
   return { title: data?.name ?? "Torneo" };
 }
 
 export default async function PlayerTournamentPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const { tab } = await searchParams;
-  const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const cookieStore = await cookies();
+  const playerId = cookieStore.get("player_id")?.value;
+  if (!playerId) redirect("/join");
+
+  const supabase = await createAdminClient();
 
   const { data: player } = await supabase
     .from("players")
     .select("id, display_name")
-    .eq("profile_id", user.id)
+    .eq("id", playerId)
     .single();
 
   const { data: tournament } = await supabase
@@ -41,7 +40,6 @@ export default async function PlayerTournamentPage({ params, searchParams }: Pag
 
   if (!tournament) notFound();
 
-  // Obtener rounds con matches para este jugador
   const { data: rounds } = await supabase
     .from("rounds")
     .select(`

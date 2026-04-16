@@ -25,28 +25,25 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refrescar sesión
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Rutas protegidas
   const pathname = request.nextUrl.pathname;
-
   const isAdminRoute = pathname.startsWith("/admin");
-  const isPlayerRoute = pathname.startsWith("/dashboard");
-  const isAuthRoute =
-    pathname.startsWith("/login") || pathname.startsWith("/register");
+  const isLoginPage = pathname === "/login";
 
-  if (!user && (isAdminRoute || isPlayerRoute)) {
+  // Solo proteger rutas /admin — players usan cookie propia
+  if (!user && isAdminRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  // Si un admin autenticado va al login, redirigir al panel
+  if (user && isLoginPage) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/admin";
     return NextResponse.redirect(url);
   }
 

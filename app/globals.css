@@ -3,104 +3,153 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-  }
-
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+    background-color: #0d0b1a;
+    color: #f0e6ff;
+    font-family: var(--font-geist-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
 @layer components {
+
+  /* ── Cards ─────────────────────────────── */
+  .card {
+    background-color: #16132e;
+    border: 1px solid rgba(100,80,200,0.3);
+    @apply rounded-lg p-4;
+  }
+  .card-hover {
+    background-color: #16132e;
+    border: 1px solid rgba(100,80,200,0.3);
+    @apply rounded-lg p-4 cursor-pointer transition-all;
+  }
+  .card-hover:hover {
+    border-color: rgba(255,0,144,0.5);
+    box-shadow: 0 0 18px rgba(255,0,144,0.12);
+  }
+
+  /* ── Buttons ────────────────────────────── */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    background-color: #ff0090;
+    box-shadow: 0 0 16px rgba(255,0,144,0.45);
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-6 py-3 text-sm font-black uppercase tracking-widest text-black transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: #ff33a8;
+    box-shadow: 0 0 26px rgba(255,0,144,0.65);
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-gray-700 ring-1 ring-inset ring-gray-300 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50;
+    border: 1px solid rgba(0,229,255,0.55);
+    color: #00e5ff;
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-transparent px-6 py-3 text-sm font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-40;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background-color: rgba(0,229,255,0.08);
+    box-shadow: 0 0 14px rgba(0,229,255,0.25);
   }
 
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    background-color: #ff3355;
+    box-shadow: 0 0 14px rgba(255,51,85,0.35);
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-6 py-3 text-sm font-black uppercase tracking-widest text-white transition-all active:scale-95 disabled:opacity-40;
   }
+  .btn-danger:hover:not(:disabled) { background-color: #ff5577; }
 
-  .card {
-    @apply rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200;
-  }
-
-  .card-hover {
-    @apply rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 transition-shadow hover:shadow-md;
-  }
-
-  .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
-  }
-
-  .badge-green {
-    @apply badge bg-green-100 text-green-800;
-  }
-
-  .badge-blue {
-    @apply badge bg-blue-100 text-blue-800;
-  }
-
-  .badge-yellow {
-    @apply badge bg-yellow-100 text-yellow-800;
-  }
-
-  .badge-red {
-    @apply badge bg-red-100 text-red-800;
-  }
-
-  .badge-gray {
-    @apply badge bg-gray-100 text-gray-700;
-  }
-
+  /* ── Form elements ──────────────────────── */
   .input {
-    @apply block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500;
+    background-color: #1e1945;
+    border: 1px solid rgba(100,80,200,0.4);
+    color: #f0e6ff;
+    @apply block w-full rounded-md px-4 py-3 text-sm transition-all focus:outline-none;
+  }
+  .input::placeholder { color: #8888bb; }
+  .input:focus {
+    border-color: #ff0090;
+    box-shadow: 0 0 10px rgba(255,0,144,0.25);
   }
 
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-1;
+    color: #9090bb;
+    @apply mb-1.5 block text-xs font-black uppercase tracking-widest;
   }
 
+  /* ── Badges ─────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-widest;
+  }
+  .badge-green  { @apply badge; border:1px solid #00ff65; color:#00ff65; background:rgba(0,255,101,0.1); }
+  .badge-blue   { @apply badge; border:1px solid #00e5ff; color:#00e5ff; background:rgba(0,229,255,0.1); }
+  .badge-yellow { @apply badge; border:1px solid #ffe600; color:#ffe600; background:rgba(255,230,0,0.1); }
+  .badge-red    { @apply badge; border:1px solid #ff3355; color:#ff3355; background:rgba(255,51,85,0.1); }
+  .badge-gray   { @apply badge; border:1px solid rgba(144,144,187,0.45); color:#9090bb; }
+  .badge-pink   { @apply badge; border:1px solid #ff0090; color:#ff0090; background:rgba(255,0,144,0.1); }
+
+  /* ── Court card ─────────────────────────── */
   .court-card {
-    @apply rounded-xl border-2 border-brand-200 bg-brand-50 p-4;
+    background-color: #16132e;
+    border: 1px solid rgba(0,229,255,0.4);
+    box-shadow: 0 0 10px rgba(0,229,255,0.08);
+    @apply rounded-lg p-4;
   }
 
+  /* ── Player chip ────────────────────────── */
   .player-chip {
-    @apply inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800;
+    background-color: #1e1945;
+    border: 1px solid rgba(100,80,200,0.3);
+    color: #f0e6ff;
+    @apply inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium;
+  }
+
+  /* ── Tab bar ────────────────────────────── */
+  .tab-bar {
+    background-color: #1e1945;
+    @apply flex gap-1 rounded-lg p-1;
+  }
+  .tab-item {
+    color: #9090bb;
+    @apply flex-1 rounded px-3 py-2 text-xs font-black uppercase tracking-widest text-center transition-all;
+  }
+  .tab-item.active {
+    background-color: #ff0090;
+    color: #000;
+    box-shadow: 0 0 10px rgba(255,0,144,0.4);
+  }
+  .tab-item:not(.active):hover { color: #f0e6ff; }
+}
+
+@layer utilities {
+  .text-neon-pink   { color:#ff0090; text-shadow:0 0 10px rgba(255,0,144,0.8); }
+  .text-neon-cyan   { color:#00e5ff; text-shadow:0 0 10px rgba(0,229,255,0.8); }
+  .text-neon-green  { color:#00ff65; text-shadow:0 0 10px rgba(0,255,101,0.8); }
+  .text-neon-yellow { color:#ffe600; text-shadow:0 0 10px rgba(255,230,0,0.8); }
+  .text-muted       { color:#9090bb; }
+
+  .font-display {
+    font-family: var(--font-bebas, 'Bebas Neue'), sans-serif;
+  }
+
+  .glow-pink { box-shadow: 0 0 20px rgba(255,0,144,0.5); }
+  .glow-cyan { box-shadow: 0 0 20px rgba(0,229,255,0.5); }
+
+  .pb-safe { padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px); }
+  .mb-nav  { margin-bottom: 80px; }
+
+  .stripe-accent {
+    height: 3px;
+    background: linear-gradient(90deg, #ff0090 0%, #ff0090 33%, #00e5ff 33%, #00e5ff 66%, #ffe600 66%, #ffe600 100%);
   }
 }
 
-/* Animaciones */
+/* Scrollbar */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:#2d2560; border-radius:3px; }
+
+/* Fade-in animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity:0; transform:translateY(6px); }
+  to   { opacity:1; transform:translateY(0); }
 }
-
-.animate-fade-in {
-  animation: fadeIn 0.25s ease-out;
-}
-
-/* Scrollbar minimalista */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  @apply rounded-full bg-gray-300;
-}
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400;
-}
+.animate-fade-in { animation: fadeIn 0.25s ease-out; }

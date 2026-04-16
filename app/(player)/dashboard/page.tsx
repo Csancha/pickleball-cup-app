@@ -1,210 +1,171 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
 import Link from "next/link";
-import { Trophy, Users, User, Calendar, BarChart3, Coffee } from "lucide-react";
+import { Trophy, Calendar, BarChart3, Users } from "lucide-react";
 
 export const metadata: Metadata = { title: "Mi torneo" };
 
 export default async function PlayerDashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const cookieStore = await cookies();
+  const playerId = cookieStore.get("player_id")?.value;
+  if (!playerId) redirect("/join");
 
-  // Buscar el perfil del jugador
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, full_name, email")
-    .eq("id", user.id)
-    .single();
+  const supabase = await createAdminClient();
 
-  // Buscar el player vinculado a este profile
+  // Player info
   const { data: player } = await supabase
     .from("players")
     .select("id, display_name")
-    .eq("profile_id", user.id)
+    .eq("id", playerId)
     .single();
 
-  // Buscar si está en algún torneo activo
-  let tournamentPlayer = null;
-  let tournament = null;
-  let team = null;
-  let individualStanding = null;
+  if (!player) redirect("/join");
 
-  if (player) {
-    const { data: tp } = await supabase
-      .from("tournament_players")
-      .select(`
-        id, team_id, total_byes, total_matches_played,
-        tournaments(id, name, status, current_phase, total_league_rounds, match_duration_minutes, total_courts),
-        teams(id, name, color)
-      `)
-      .eq("player_id", player.id)
-      .in("tournaments.status", ["active", "finals_active", "league_finished"])
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
+  // Torneo activo del jugador
+  const { data: tp } = await supabase
+    .from("tournament_players")
+    .select(`
+      id, team_id, total_byes,
+      tournaments(id, name, status, current_phase),
+      teams(id, name, color)
+    `)
+    .eq("player_id", playerId)
+    .not("tournaments.status", "eq", "finished")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-    if (tp) {
-      tournamentPlayer = tp;
-      tournament = tp.tournaments as unknown as Record<string, unknown>;
-      team = tp.teams as unknown as Record<string, unknown>;
+  const tournament = tp?.tournaments as unknown as { id: string; name: string; status: string; current_phase: string } | null;
+  const team = tp?.teams as unknown as { id: string; name: string; color: string } | null;
 
-      const { data: standing } = await supabase
-        .from("individual_standings")
-        .select("matches_played, matches_won, points_scored, ranking_position, byes")
-        .eq("tournament_id", (tournament as { id: string }).id)
-        .eq("player_id", player.id)
-        .single();
-
-      individualStanding = standing;
-    }
+  // Clasificación individual
+  let standing = null;
+  if (tournament) {
+    const { data } = await supabase
+      .from("individual_standings")
+      .select("matches_played, matches_won, points_scored, ranking_position, byes")
+      .eq("tournament_id", tournament.id)
+      .eq("player_id", playerId)
+      .maybeSingle();
+    standing = data;
   }
 
+  const phase = tournament?.status === "finals_active" ? "FINALES" :
+    tournament?.status === "league_finished" ? "LIGA TERMINADA" : "EN JUEGO";
+
   return (
-    <div className="space-y-5 animate-fade-in">
-      {/* Bienvenida */}
-      <div className="card p-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-lg font-bold text-brand-700">
-            {(profile?.full_name ?? "?").charAt(0).toUpperCase()}
+    <div className="space-y-4 animate-fade-in">
+
+      {/* Welcome */}
+      <div className="rounded-lg py-6 text-center" style={{ background: "linear-gradient(135deg, #1e1945 0%, #16132e 100%)", border: "1px solid rgba(255,0,144,0.3)" }}>
+        <p className="font-display text-[10px] tracking-[0.4em] text-muted mb-1">BIENVENIDO</p>
+        <h1 className="font-display text-4xl text-neon-pink" style={{ letterSpacing: "0.05em" }}>
+          {player.display_name.toUpperCase()}
+        </h1>
+        {team && (
+          <div className="mt-2 flex items-center justify-center gap-2">
+            <div
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: team.color, boxShadow: `0 0 6px ${team.color}` }}
+            />
+            <span className="text-xs font-black uppercase tracking-widest" style={{ color: team.color }}>
+              {team.name}
+            </span>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">
-              Hola, {profile?.full_name?.split(" ")[0] ?? "jugador"}
-            </h1>
-            <p className="text-sm text-gray-500">
-              {player ? player.display_name : "Sin ficha de jugador"}
-            </p>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Sin torneo */}
       {!tournament && (
         <div className="card py-12 text-center">
-          <Trophy className="mx-auto h-12 w-12 text-gray-300" />
-          <h2 className="mt-4 font-semibold text-gray-700">Sin torneo activo</h2>
-          <p className="mt-1 text-sm text-gray-400">
-            No estás inscrito en ningún torneo activo en este momento.
-          </p>
-          {!player && (
-            <p className="mt-3 text-sm text-gray-400">
-              Contacta con el administrador para que te añada al torneo.
-            </p>
-          )}
+          <Trophy className="mx-auto h-10 w-10 text-muted" />
+          <p className="font-display mt-4 text-2xl text-muted">SIN TORNEO ACTIVO</p>
+          <p className="mt-1 text-xs text-muted">Contacta con el admin para que active el torneo.</p>
         </div>
       )}
 
       {/* Torneo activo */}
       {tournament && (
         <>
-          {/* Info del torneo */}
-          <div className="card p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Torneo actual</p>
-                <h2 className="font-bold text-gray-900">{String(tournament.name)}</h2>
-              </div>
-              <span className="badge badge-blue">
-                {(tournament as { status: string }).status === "finals_active" ? "Finales" : "En curso"}
-              </span>
+          {/* Torneo info */}
+          <div className="card flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-0.5">Torneo</p>
+              <p className="font-bold text-[#f0e6ff] text-sm">{tournament.name}</p>
             </div>
+            <span className="badge-green">{phase}</span>
           </div>
 
-          {/* Equipo */}
-          {team && (
-            <div className="card p-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className="h-10 w-10 rounded-xl shrink-0"
-                  style={{ backgroundColor: String((team as { color?: unknown }).color ?? "#6b7280") }}
-                />
-                <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Mi equipo</p>
-                  <p className="font-bold text-gray-900">{String((team as { name: string }).name)}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Mis stats */}
-          {individualStanding && (
+          {/* Stats */}
+          {standing && (
             <div className="grid grid-cols-3 gap-3">
-              <div className="card text-center">
-                <p className="text-xl font-bold text-brand-700">
-                  {individualStanding.ranking_position ?? "–"}
+              <div
+                className="rounded-lg py-5 text-center"
+                style={{ background: "#1e1945", border: "1px solid rgba(255,0,144,0.3)" }}
+              >
+                <p className="font-display text-3xl text-neon-pink">
+                  {standing.ranking_position ?? "—"}
                 </p>
-                <p className="text-xs text-gray-500">Ranking</p>
+                <p className="text-[10px] font-black uppercase tracking-wider text-muted mt-0.5">Ranking</p>
               </div>
-              <div className="card text-center">
-                <p className="text-xl font-bold text-green-600">
-                  {individualStanding.matches_won}
+              <div
+                className="rounded-lg py-5 text-center"
+                style={{ background: "#1e1945", border: "1px solid rgba(0,255,101,0.3)" }}
+              >
+                <p className="font-display text-3xl text-neon-green">
+                  {standing.matches_won}
                 </p>
-                <p className="text-xs text-gray-500">Victorias</p>
+                <p className="text-[10px] font-black uppercase tracking-wider text-muted mt-0.5">Victorias</p>
               </div>
-              <div className="card text-center">
-                <p className="text-xl font-bold text-gray-700">
-                  {individualStanding.points_scored}
+              <div
+                className="rounded-lg py-5 text-center"
+                style={{ background: "#1e1945", border: "1px solid rgba(0,229,255,0.3)" }}
+              >
+                <p className="font-display text-3xl text-neon-cyan">
+                  {standing.points_scored}
                 </p>
-                <p className="text-xs text-gray-500">Puntos</p>
+                <p className="text-[10px] font-black uppercase tracking-wider text-muted mt-0.5">Puntos</p>
               </div>
             </div>
           )}
 
-          {/* Accesos rápidos */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-              Accesos rápidos
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <QuickLink
-                href={`/tournament/${(tournament as { id: string }).id}`}
-                icon={<Calendar className="h-5 w-5 text-brand-600" />}
-                label="Mis partidos"
-              />
-              <QuickLink
-                href={`/tournament/${(tournament as { id: string }).id}?tab=standings`}
-                icon={<BarChart3 className="h-5 w-5 text-brand-600" />}
-                label="Clasificación"
-              />
-              <QuickLink
-                href={`/tournament/${(tournament as { id: string }).id}?tab=team`}
-                icon={<Users className="h-5 w-5 text-brand-600" />}
-                label="Mi equipo"
-              />
-              {tournamentPlayer && tournamentPlayer.total_byes > 0 && (
-                <QuickLink
-                  href={`/tournament/${(tournament as { id: string }).id}?tab=byes`}
-                  icon={<Coffee className="h-5 w-5 text-amber-500" />}
-                  label="Mis descansos"
-                />
-              )}
-            </div>
+          {/* Quick links */}
+          <div className="grid grid-cols-2 gap-3">
+            <Link
+              href={`/tournament/${tournament.id}`}
+              className="card-hover flex flex-col items-center gap-3 py-6"
+            >
+              <Calendar className="h-7 w-7 text-neon-pink" />
+              <span className="font-display text-lg text-[#f0e6ff]" style={{ letterSpacing: "0.05em" }}>PARTIDOS</span>
+            </Link>
+            <Link
+              href={`/tournament/${tournament.id}?tab=standings`}
+              className="card-hover flex flex-col items-center gap-3 py-6"
+            >
+              <BarChart3 className="h-7 w-7 text-neon-cyan" />
+              <span className="font-display text-lg text-[#f0e6ff]" style={{ letterSpacing: "0.05em" }}>CLASIF.</span>
+            </Link>
+            <Link
+              href={`/tournament/${tournament.id}?tab=team`}
+              className="card-hover flex flex-col items-center gap-3 py-6"
+            >
+              <Users className="h-7 w-7 text-neon-green" />
+              <span className="font-display text-lg text-[#f0e6ff]" style={{ letterSpacing: "0.05em" }}>EQUIPO</span>
+            </Link>
+            {tournament.status === "finals_active" && (
+              <Link
+                href={`/tournament/${tournament.id}?tab=finals`}
+                className="card-hover flex flex-col items-center gap-3 py-6"
+              >
+                <Trophy className="h-7 w-7 text-neon-yellow" />
+                <span className="font-display text-lg text-[#f0e6ff]" style={{ letterSpacing: "0.05em" }}>FINALES</span>
+              </Link>
+            )}
           </div>
         </>
       )}
     </div>
-  );
-}
-
-function QuickLink({
-  href,
-  icon,
-  label,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <Link href={href} className="card-hover flex items-center gap-3 p-4">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 shrink-0">
-        {icon}
-      </div>
-      <span className="font-medium text-gray-800 text-sm">{label}</span>
-    </Link>
   );
 }

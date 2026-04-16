@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import PlayerNav from "@/components/player/PlayerNav";
 
 export default async function PlayerLayout({
@@ -7,28 +7,18 @@ export default async function PlayerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const playerId = cookieStore.get("player_id")?.value;
+  const playerName = cookieStore.get("player_name")?.value;
 
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, full_name, email")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) redirect("/login");
-
-  // Si es admin y accede a /dashboard, redirigir al panel admin
-  if (profile.role === "admin") redirect("/admin");
+  if (!playerId) redirect("/join");
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <PlayerNav profile={profile} />
-      <main className="mx-auto max-w-2xl px-4 py-6">{children}</main>
+    <div className="min-h-screen bg-[#0d0b1a]">
+      <PlayerNav playerName={playerName ?? "Jugador"} />
+      <main className="mx-auto max-w-lg px-4 py-5 mb-nav">
+        {children}
+      </main>
     </div>
   );
 }
