@@ -64,6 +64,8 @@ async function seed() {
 
   // 1. Crear admin
   console.log("1. Creando usuario admin...");
+  let adminUserId: string | undefined;
+
   const { data: adminAuth, error: adminError } = await supabase.auth.admin.createUser({
     email: "admin@pickleball.test",
     password: "password123",
@@ -71,16 +73,29 @@ async function seed() {
     email_confirm: true,
   });
 
-  if (adminError && !adminError.message.includes("already been registered")) {
-    console.error("   ❌", adminError.message);
-  } else {
+  if (adminError) {
+    if (adminError.message.includes("already been registered") || adminError.message.includes("Database error")) {
+      // Buscar usuario existente
+      const { data: users } = await supabase.auth.admin.listUsers();
+      const existing = users?.users?.find((u) => u.email === "admin@pickleball.test");
+      if (existing) {
+        adminUserId = existing.id;
+        console.log("   ✅ admin@pickleball.test ya existe");
+      } else {
+        console.error("   ❌", adminError.message);
+      }
+    } else {
+      console.error("   ❌", adminError.message);
+    }
+  } else if (adminAuth?.user) {
+    adminUserId = adminAuth.user.id;
     console.log("   ✅ admin@pickleball.test / password123");
   }
 
   // Asegurar perfil admin
-  if (adminAuth?.user) {
+  if (adminUserId) {
     await supabase.from("profiles").upsert({
-      id: adminAuth.user.id,
+      id: adminUserId,
       email: "admin@pickleball.test",
       full_name: "Admin Torneo",
       role: "admin",
@@ -88,11 +103,18 @@ async function seed() {
   }
 
   // 2. Obtener ID del admin
-  const { data: adminProfile } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("email", "admin@pickleball.test")
-    .single();
+  let adminProfile: { id: string } | null = null;
+
+  if (adminUserId) {
+    adminProfile = { id: adminUserId };
+  } else {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", "admin@pickleball.test")
+      .single();
+    adminProfile = data;
+  }
 
   if (!adminProfile) {
     console.error("❌ No se pudo obtener el perfil admin");
@@ -129,31 +151,46 @@ async function seed() {
 
   // 4. Obtener o crear equipos
   console.log("\n3. Configurando equipos...");
-  const { data: teamsData } = await supabase
+  let { data: teamsData } = await supabase
     .from("teams")
     .select("id, name")
-    .eq("tournament_id", tournamentId);
+    .eq("tournament_id", tournamentId)
+    .order("created_at");
 
   let teams = teamsData ?? [];
 
+  // Crear equipos si no existen
   if (teams.length < 2) {
-    // Los equipos se crean automáticamente al crear el torneo
-    // Renombrar
-    const { data: freshTeams } = await supabase
+    const teamInserts = [
+      { tournament_id: tournamentId, name: "Equipo Verde", color: "#22c55e" },
+      { tournament_id: tournamentId, name: "Equipo Azul", color: "#3b82f6" },
+    ];
+    const { data: newTeams, error: teamsError } = await supabase
       .from("teams")
-      .select("id, name")
-      .eq("tournament_id", tournamentId)
-      .order("created_at");
+      .insert(teamInserts)
+      .select("id, name");
 
-    teams = freshTeams ?? [];
-  }
+    if (teamsError) {
+      console.error("   ❌ Error creando equipos:", teamsError.message);
+      process.exit(1);
+    }
+    teams = newTeams ?? [];
 
-  if (teams.length >= 2) {
+    // También crear team_standings vacíos
+    for (const team of teams) {
+      await supabase.from("team_standings").upsert({
+        tournament_id: tournamentId,
+        team_id: team.id,
+        matches_won: 0, matches_drawn: 0, matches_lost: 0,
+        points: 0, bonus_points: 0, total_points: 0, point_diff: 0,
+      });
+    }
+  } else {
     await supabase.from("teams").update({ name: "Equipo Verde", color: "#22c55e" }).eq("id", teams[0].id);
     await supabase.from("teams").update({ name: "Equipo Azul", color: "#3b82f6" }).eq("id", teams[1].id);
-    console.log("   ✅ Equipo Verde y Equipo Azul");
   }
 
+  console.log("   ✅ Equipo Verde y Equipo Azul");
   const [teamA, teamB] = teams;
 
   // 5. Crear jugadores y asignarlos
